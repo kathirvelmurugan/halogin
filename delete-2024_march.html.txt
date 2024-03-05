@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MQTT Form Data</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/mqttws31.min.js"></script>
+</head>
+<body>
+
+<h1>MQTT Form Data</h1>
+
+<form id="mqttForm">
+  <label for="username">Username:</label>
+  <input type="text" id="username" name="username" required><br><br>
+
+  <label for="password">Password:</label>
+  <input type="password" id="password" name="password" required><br><br>
+
+  <button type="submit">Submit</button>
+</form>
+
+<script>
+  // MQTT Broker configuration
+  var broker = "mqtt://your-broker-url"; // Change this to your MQTT broker URL
+  var port = 8083; // Change this to your broker's WebSocket port
+  var clientID = "mqtt_form_data_" + Math.random().toString(16).substr(2, 8);
+
+  var client = new Paho.MQTT.Client(broker, port, clientID);
+
+  // Set callback handlers
+  client.onConnectionLost = onConnectionLost;
+  client.onMessageArrived = onMessageArrived;
+
+  // Connect to MQTT broker
+  client.connect({
+    onSuccess: onConnect,
+    onFailure: onFailure
+  });
+
+  // Function to handle successful connection
+  function onConnect() {
+    console.log("Connected to MQTT broker");
+  }
+
+  // Function to handle connection failure
+  function onFailure(error) {
+    console.log("Failed to connect to MQTT broker: " + error.errorMessage);
+  }
+
+  // Function to handle connection loss
+  function onConnectionLost(responseObject) {
+    if (responseObject.errorCode !== 0) {
+      console.log("Connection lost: " + responseObject.errorMessage);
+    }
+  }
+
+  // Function to handle incoming messages
+  function onMessageArrived(message) {
+    console.log("Message received: " + message.payloadString);
+    // You can add logic here to handle incoming messages if needed
+  }
+
+  // Function to handle form submission
+  document.getElementById("mqttForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+    var form = event.target;
+    var username = form.elements["username"].value;
+    var password = form.elements["password"].value;
+
+    // Publish form data to MQTT topic
+    var data = {
+      username: username,
+      password: password
+    };
+    var message = new Paho.MQTT.Message(JSON.stringify(data));
+    message.destinationName = "your/mqtt/topic"; // Change this to your MQTT topic
+    client.send(message);
+
+    // Clear form fields
+    form.reset();
+  });
+</script>
+
+</body>
+</html>
